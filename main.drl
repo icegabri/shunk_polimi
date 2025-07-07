@@ -1,0 +1,420 @@
+import time
+
+pos_pick_shunk = posx(653.32, -25.74, 36.1, 178.47, 179.82, 178.88)
+pre_pick_shunk = trans(pos_pick_shunk, [0,0,-100,0,0,0], DR_TOOL)
+
+
+def main():
+    shunk_picking()
+    
+def shunk_picking():
+    big_rad = 20
+    small_rad = 2
+    set_accj(20)
+    set_velj(20)
+    set_accx(30)
+    set_velx(30)
+    set_tool("2f_gripper_weight")
+    set_tcp("quick_changer")
+    
+    store = storage()
+    #move_home(DR_HOME_TARGET_USER)
+    store.grip_shunk()
+    store.place_shunk_gripper()
+    #store.place_vacuum_gripper()
+    #set_accx(1000)
+    #set_velx(1000)
+    #pre_pick_lid = trans(store.pick_controller_lid, [0,0,400,0,0,0], DR_BASE)
+    #movejx(pre_pick_lid, sol = 6, r = big_rad)
+    #movel(store.pick_controller_lid, r = small_rad)
+    ## Enable air passage
+    #set_digital_output(11, ON)
+    ## Start vacuum
+    #set_digital_output(8, ON)
+    #wait(1)
+    #if not get_digital_input(13):
+        #tp_popup("Errore in gripping the lid no vacuum found", DR_PM_MESSAGE)
+    #movel(pre_pick_lid, r = big_rad)
+    #movel(store.to_release_lid, r = big_rad, ra = DR_MV_RA_OVERRIDE)
+    #movel(store.pre_release_lid, r = big_rad, ra = DR_MV_RA_DUPLICATE)
+    #movel(store.relese_lid, r = small_rad)
+    ## Disable Vacuum
+    #set_digital_output(8, OFF)
+    #wait(1)
+    ## Go up pick and return
+    #movel(store.pre_release_lid, r = big_rad)
+    #movel(store.relese_lid, r = small_rad)
+    ## Start vacuum
+    #set_digital_output(8, ON)
+    #wait(1)
+    #if not get_digital_input(13):
+        #tp_popup("Errore in gripping the lid no vacuum found", DR_PM_MESSAGE)
+    #movel(store.pre_release_lid, r = big_rad)    
+    #movel(store.to_release_lid, r = big_rad)
+    #movel(pre_pick_lid, r = big_rad)
+    #movel(store.pick_controller_lid, r = small_rad)
+    ## Disable Vacuum
+    #set_digital_output(8, OFF)
+    #wait(1)
+    #movel(pre_pick_lid, r = big_rad)
+    #set_accx(50)
+    #set_velx(50)
+    #store.place_vacuum_gripper()
+    
+
+    
+class storage:    
+    
+    def __init__(self):
+        trestle_offset = -150
+        # Force definition
+        self.force = 60
+        # Digital output robot definition
+        self.DO_GRIP_QUICK_CHANGER = 9
+        self.DO_RELEASE_QUICK_CHANGER = 10
+        self.DO_SHUNK_STORAGE = 5
+        self.DO_VACUUM_STORAGE = 6
+        self.DO_PANTOGRAPH_STORAGE = 7
+        self.DO_ACTIVATE_VACUUM = 8
+        self.DO_ENABLE_VACUUM = 11 # Need this before you activate the vacuum
+        
+        # Definition digital robot digital input
+        self.DI_VACUUM_FINDED = 13
+        
+        # Moxa digital input definition
+        self.gripper_hocked = "DI_moxa_6"
+        self.gripper_released = "DI_moxa_7"
+        self.DI_SHUNK_STORAGE = "DI_moxa_0"
+        self.DI_VACUUM_STORAGE = "DI_moxa_1"
+        self.DI_PANTOGRAPH_STORAGE = "DI_moxa_2"
+        self.DI_PISTON_LOCK_PANTOGRAPH = "DI_moxa_5"
+        self.DI_PISTON_LOCK_VACUUM = "DI_moxa_4"
+        self.DI_PISTON_LOCK_SHUNK = "DI_moxa_3"
+        
+        # Pos pantograph
+        self.pre_grip_pantograph = posx(985.14, -113.00, 54.00, 91.5, 89.77, -179.00) # posx(985.14, -111.00, 46.0, 91.38, 89.77, -178.8) #posx(1110.59, -94.65, 72.54, 91.65, 89.22, -179.06)#posx(1110.63, -94.00, 70.89, 91.68, 89.21, -179.04) #posx(1111.77, -90.07, 67.44, 91.84, 89.08, -179.04) # posx(1110.19, -86.51, 71.12, 91.84, 89.08, -179.03)
+        self.pre_ascent_pantograph = trans(self.pre_grip_pantograph, [0, -127.69, 0, 0, 0, 0], DR_BASE) #posx(1110.59, -222.34, 72.54, 91.65, 89.22, -179.06)#posx(1110.63, -222.34, 70.89, 91.68, 89.21, -179.04) # posx(986.38, -286.00, 73.44, 91.82, 89.13, -178.98)
+        self.pre_release_pantograph = trans(self.pre_grip_pantograph, [0, 0, 3, 0, 0, 0], DR_BASE) #posx(1110.59, -94.65, 73.50, 91.65, 89.22, -179.06) #posx(1110.63, -94.00, 72.00, 91.68, 89.21, -179.04) # posx(986.38, -153.5, 75, 91.82, 89.13, -178.98)
+        self.pre_descent_pantograph = trans(self.pre_ascent_pantograph, [0, 0, 217.46, 0, 0, 0], DR_BASE) #posx(1110.59, -222.34, 290, 91.65, 89.22, -179.06) # posx(986.38, -222.34, 290.00, 91.82, 89.13, -178.98)       
+        self.pre_obstruction_trestle = trans(self.pre_descent_pantograph, [0,trestle_offset,0,0,0,0], DR_BASE)
+
+        
+        # Pos vacuum gripper
+        self.frontal_pos_vacuum = posj(169.58, -42.45, -144.5, 77.88, -89.48, 234.37)
+        self.pre_grip_vacuum = posx(586.69, 102.24, 259.04, 91.68, 89.54, -89.15)
+        self.disapproach_vacuum = posx(586.65, -200.25, 259.03, 91.68, 89.54, -89.15)
+        self.z_offs_vacuum = 100
+        self.front_pos_pre_release = trans(self.disapproach_vacuum, [0,0,self.z_offs_vacuum,0,0,0], DR_BASE)
+        self.pre_release = trans(self.pre_grip_vacuum, [0,0,self.z_offs_vacuum,0,0,0], DR_BASE)
+        self.place_release = trans(self.pre_grip_vacuum, [0,3,15,0,0,0], DR_BASE)
+        
+        
+        #Pos Shunk EGU50 Gripper
+        self.pos_pick_shunk = posx(653.32, -25.74, 36.1, 178.47, 179.82, 178.88)
+        self.pre_pick_shunk = trans(pos_pick_shunk, [0,0,-100,0,0,0], DR_TOOL)
+        self.to_pick_shunk = trans(self.pos_pick_shunk, [0,0,-200,0,0,0], DR_TOOL)
+        self.to_pick_shunk_joint = ikin(self.to_pick_shunk, 7, DR_BASE)
+        self.place_shunk = posx(653.24, -25.09, 34.36, 112.35, 179.94, 112.82)
+        self.pre_place_shunk = trans(self.place_shunk, [0,-100,0,0,0,0], DR_BASE)
+        self.pre_force_shunk = trans(self.place_shunk, [0,-2,0,0,0,0], DR_BASE)
+        self.to_place_shunk = trans(self.place_shunk, [0,-200,0,0,0,0], DR_BASE)
+        self.to_place_shunk_joint = ikin(self.to_place_shunk, 7, DR_BASE)
+        
+        
+        # Data for linear sensor
+        self.MIN_VOLTAGE = 2.30 # Correspond to the maximum height 116.33
+        self.MAX_VOLTAGE = 7.22 # Corresponf to the minimum height 51.97
+        VOLT_DIFFERENCE = self.MAX_VOLTAGE - self.MIN_VOLTAGE
+        MAX_HEIGHT = 116.33
+        MIN_HEIGHT = 51.97
+        LINEAR_GUIDE_HEIGHT =  MAX_HEIGHT - MIN_HEIGHT
+        self.GUIDE_RATIO = LINEAR_GUIDE_HEIGHT / VOLT_DIFFERENCE
+        
+    def get_mm_to_move(self):
+        # Calculate the middle point of the sensor
+        middle = (self.MAX_VOLTAGE + self.MIN_VOLTAGE) / 2
+        # Get the current reading of the analog sensor
+        current_pos = round(get_analog_input(ch = 1),2)
+        # Calculate the distance to do do go in the middle
+        return self.GUIDE_RATIO * (current_pos - middle)
+
+        
+    def grip_shunk(self):
+        movej(self.to_pick_shunk_joint)
+        mwait(0)
+        set_tcp("quick_changer")
+        # Move in joint space in front of the vacuum gripper
+        movel(self.pre_pick_shunk)
+        movel(self.pos_pick_shunk)        
+        wait(1)
+        # Start force task
+        k_d = [10000.0, 3000.0, 10000.0, 1000.0, 1000.0, 1000.0] #[10000.0, 3000.0, 10000.0, 1000.0, 1000.0, 1000.0]
+        task_compliance_ctrl(k_d)
+        force_desired = -self.force
+        f_d = [0.0, 0.0, force_desired, 0.0, 0.0, 0.0]
+        f_dir = [0, 0, 1, 0, 0, 0]
+        set_desired_force(f_d, f_dir, mod = DR_FC_MOD_REL)
+         
+        # Force and compliance control after detecting external force
+        force_check = self.force
+        force_condition = check_force_condition(DR_AXIS_Z, max=force_check, ref=DR_TOOL)
+        while (force_condition):
+            force_condition = check_force_condition(DR_AXIS_Z, max=force_check, ref=DR_TOOL)
+            if force_condition == 0:
+                break
+        self.grip_quick_changer()
+        # Stop force control
+        release_force()
+        # Once gripped to the quick changer try unlocking the storage block
+        self.open_shunk_block()
+        # Go back
+        movel(self.pre_place_shunk)
+        # Stop Compliance
+        release_compliance_ctrl()
+        # Return to the starting postion
+        movej(self.to_place_shunk_joint)
+        mwait(0)
+        set_tcp("pinza_due_dita")
+        
+        
+    def place_shunk_gripper(self):
+        self.open_shunk_block()
+        movej(self.to_place_shunk_joint)
+        mwait(0)
+        set_tcp("quick_changer")
+        # Move in joint space in front of the vacuum gripper
+        movel(self.pre_place_shunk)
+        tp_log(str(get_current_posx()))
+        movel(self.pre_force_shunk)
+        wait(1)
+        # Start force control z base
+        k_d = [3000.0, 3000.0, 800.0, 1000.0, 1000.0, 1000.0]
+        task_compliance_ctrl(k_d)
+        force_desired = self.force
+        f_d = [0.0, force_desired, 0.0, 0.0, 0.0, 0.0]
+        f_dir = [0, 1, 0, 0, 0, 0]
+        set_desired_force(f_d, f_dir, mod = DR_FC_MOD_REL)
+         
+        # Force and compliance control after detecting external force
+        force_check = self.force
+        force_condition = check_force_condition(DR_AXIS_Y, max=force_check, ref=DR_BASE)
+        while (force_condition):
+            force_condition = check_force_condition(DR_AXIS_Y, max=force_check, ref=DR_BASE)
+            if force_condition == 0:
+                break
+        
+        wait(2)
+        # Close shunk block
+        self.close_shunk_block()
+        # Stop force control
+        release_force()
+        self.release_quick_changer()        
+        # return to initial pos
+        movel(self.pre_pick_shunk)
+        # Stop Compliance
+        release_compliance_ctrl()
+        
+    
+    def grip_vacuum_gripper(self):
+        # Move in joint space in front of the vacuum gripper
+        movej(self.frontal_pos_vacuum)
+        movel(self.pre_grip_vacuum)
+        self.force_task()
+        self.grip_quick_changer()
+        # Stop force control
+        release_force()
+        # Once gripped to the quick changer try unlocking the storage block
+        self.open_vacuum_block()
+        # Go up
+        movel(self.pre_release)
+        movel(self.front_pos_pre_release)
+        # return to initial pos
+        movel(self.front_pos_pre_release)
+        # Stop Compliance
+        release_compliance_ctrl()
+        # Return to the starting postion
+   
+        
+    def place_vacuum_gripper(self):
+        # Disable air passage
+        set_digital_output(11, OFF)
+        # Move in joint space in front of the vacuum gripper
+        movej(self.frontal_pos_vacuum)
+        movel(self.front_pos_pre_release)
+        movel(self.pre_release)
+        movel(self.place_release)
+        wait(1)
+        # Start force control z base
+        k_d = [3000.0, 3000.0, 800.0, 1000.0, 1000.0, 1000.0]
+        task_compliance_ctrl(k_d)
+        force_desired = -self.force
+        f_d = [0.0, 0.0, force_desired, 0.0, 0.0, 0.0]
+        f_dir = [0, 0, 1, 0, 0, 0]
+        set_desired_force(f_d, f_dir, mod = DR_FC_MOD_REL)
+         
+        # Force and compliance control after detecting external force
+        force_check = self.force
+        force_condition = check_force_condition(DR_AXIS_Z, max=force_check, ref=DR_BASE)
+        while (force_condition):
+            force_condition = check_force_condition(DR_AXIS_Z, max=force_check, ref=DR_BASE)
+            if force_condition == 0:
+                break
+                
+        # Close vacuum block
+        self.close_vacuum_block()
+        # Stop force control
+        release_force()
+        self.release_quick_changer()        
+        # return to initial pos
+        movel(self.disapproach_vacuum)
+        # Stop Compliance
+        release_compliance_ctrl()
+        # Return to the starting postion
+        
+        
+    def open_shunk_block(self):
+        set_digital_output(self.DO_SHUNK_STORAGE, ON)
+        wait(1)
+        if get_modbus_input(self.DI_PISTON_LOCK_SHUNK):
+            tp_popup("Error Unlocking the vacuum, I will close the program", DR_PM_MESSAGE)
+            exit()
+        else:
+            tp_log("Vacuum gripper correctly released")
+    
+            
+    def close_shunk_block(self):
+        set_digital_output(self.DO_SHUNK_STORAGE, OFF)
+        wait(1)
+        if not get_modbus_input(self.DI_PISTON_LOCK_SHUNK):
+            tp_popup("Error Locking the vacuum, I will close the program", DR_PM_MESSAGE)
+            exit()
+        else:
+            tp_log("Gripper locked cooretly into the storage")
+            
+            
+    def open_vacuum_block(self):
+        set_digital_output(self.DO_VACUUM_STORAGE, ON)
+        wait(1)
+        if get_modbus_input(self.DI_PISTON_LOCK_VACUUM):
+            tp_popup("Error Unlocking the vacuum, I will close the program", DR_PM_MESSAGE)
+            exit()
+        else:
+            tp_log("Vacuum gripper correctly released")
+    
+            
+    def close_vacuum_block(self):
+        set_digital_output(self.DO_VACUUM_STORAGE, OFF)
+        wait(1)
+        if not get_modbus_input(self.DI_PISTON_LOCK_VACUUM):
+            tp_popup("Error Locking the vacuum, I will close the program", DR_PM_MESSAGE)
+            exit()
+        else:
+            tp_log("Gripper locked cooretly into the storage")
+            
+            
+    def open_panto_block(self):
+        set_digital_output(self.DO_PANTOGRAPH_STORAGE, ON)
+        wait(1)
+        # Check if hocked if not relese the grip and the force and return tu the approch position
+        if get_modbus_input(self.DI_PISTON_LOCK_PANTOGRAPH):
+            tp_popup("Error in unlocking the storage for the pantograph")
+            exit()
+        
+            
+    def close_panto_block(self):
+        set_digital_output(self.DO_PANTOGRAPH_STORAGE, OFF)
+        wait(1)
+        # Check if hocked if not relese the grip and the force and return tu the approch position
+        if not get_modbus_input(self.DI_PISTON_LOCK_PANTOGRAPH):
+            tp_popup("Error in locking the storage for the pantograph")
+            exit()
+    
+            
+    def grip_quick_changer(self):
+        set_digital_output(self.DO_RELEASE_QUICK_CHANGER,OFF)
+        set_digital_output(self.DO_GRIP_QUICK_CHANGER,ON)
+        wait(1)
+        # Check if hocked if not relese the grip and the force and return tu the approch position
+        if not get_modbus_input(self.gripper_hocked):
+            self.release_quick_changer()
+            release_force()
+            #movel(self.pre_ascent_pantograph)        
+            tp_popup("Error in hocking the quick changer", DR_PM_MESSAGE)
+        tp_log("hoocked to quick changer") 
+    
+        
+    def release_quick_changer(self):
+        set_digital_output(self.DO_GRIP_QUICK_CHANGER,OFF)
+        set_digital_output(self.DO_RELEASE_QUICK_CHANGER, ON)
+        wait(1)
+        if not get_modbus_input(self.gripper_released):
+            self.grip_quick_changer()
+            release_force()
+            #movel(self.pre_ascent_pantograph)        
+            tp_popup("error in releasing the quick changer", DR_PM_MESSAGE)
+        tp_log("unhoocked")     
+        
+        
+    def force_task(self):
+        wait(1)
+        k_d = [10000.0, 3000.0, 10000.0, 1000.0, 1000.0, 1000.0] #[10000.0, 3000.0, 10000.0, 1000.0, 1000.0, 1000.0]
+        task_compliance_ctrl(k_d)
+        force_desired = self.force
+        f_d = [0.0, force_desired, 0.0, 0.0, 0.0, 0.0]
+        f_dir = [0, 1, 0, 0, 0, 0]
+        set_desired_force(f_d, f_dir, mod = DR_FC_MOD_REL)
+         
+        # Force and compliance control after detecting external force
+        force_check = self.force
+        force_condition = check_force_condition(DR_AXIS_Z, max=force_check, ref=DR_TOOL)
+        while (force_condition):
+            force_condition = check_force_condition(DR_AXIS_Z, max=force_check, ref=DR_TOOL)
+            if force_condition == 0:
+                break
+                
+                
+    def pick_pantograph(self):
+    
+        #movel(self.pre_ascent_pantograph)
+        movel(self.pre_grip_pantograph, v = 20, a = 20)
+        # Start the force task to as near as possible to the slave side of the quick changer
+        self.force_task()
+        # Print the arrival position
+        tp_log("arrived")    
+        tp_log(str(get_current_posx()[0]))
+        self.grip_quick_changer()
+        # Once gripped to the quick changer try unlocking the storage block
+        self.open_panto_block()
+        release_force()
+        release_compliance_ctrl()
+        # Return to the starting postion
+        movel(self.pre_ascent_pantograph, v = 20, a = 20)    
+    
+        
+    def place_pantograph(self):
+    
+        self.open_panto_block()          
+        movel(self.pre_ascent_pantograph)
+        movel(self.pre_release_pantograph, v = 20, a = 20)
+        k_d = [500.0, 500.0, 1000.0, 1000.0, 1000.0, 1000.0]
+        task_compliance_ctrl(k_d)
+        # go a little closer before force control
+        movel(posx(0,0,10,0,0,0), mod = DR_MV_MOD_REL, ref = DR_TOOL)
+        release_compliance_ctrl()
+        # Start the force task to as near as possible to the slave side of the quick changer
+        self.force_task()
+        # Print the arrival position
+        tp_log("arrived")    
+        tp_log(str(get_current_posx()[0]))
+        self.close_panto_block()
+        self.release_quick_changer()
+        release_force()
+        # Go a little below to compensate for the bending of the support
+        movel(self.pre_grip_pantograph)
+        # Return to the starting postion
+        movel(self.pre_ascent_pantograph)
+        release_compliance_ctrl()
+    
+        
+
+main()
